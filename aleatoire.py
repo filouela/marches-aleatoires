@@ -3,17 +3,11 @@ import matplotlib.pyplot as plt
 import pymetal as pm
 
 def init_gpu() :
-    # device : carte graphique
     device = pm.create_system_default_device()
-
-    # queue : permet de donner le programme
     queue = device.new_command_queue()
-
-    # compile le fichier metal (pour la carte graphique)
     source = open("aleatoire.metal").read()
     bibliotheque = device.new_library_with_source(source)
 
-    # prend une fonction et la transforme pour pouvoir la mettre dans la queue
     fonction_init = bibliotheque.new_function("initialiser_ma_2")
     init_pipeline = device.new_compute_pipeline_state(fonction_init)
 
@@ -33,8 +27,6 @@ def init_gpu() :
 
 
 def call_kernel(pipeline_fonction, queue, nb_ma, best_group_size, *arguments) :
-    # message : ce qu'on met dans la queue
-    # encodeur : traduit la fonction en message
     message = queue.command_buffer()
     encodeur = message.compute_command_encoder()
     encodeur.set_compute_pipeline_state(pipeline_fonction)   
@@ -51,10 +43,8 @@ def call_kernel(pipeline_fonction, queue, nb_ma, best_group_size, *arguments) :
 def main_temps_1D() :
     nb_ma = 1024
 
-    # permet de commander la carte graphique
     device, queue, init_pipeline, _, temps_retour_1, _, _  = init_gpu()
 
-    # calcule le nb max de fils utilisable en un appel
     best_group_size = temps_retour_1.max_total_threads_per_threadgroup
 
     struct_ma = np.dtype([
@@ -64,16 +54,13 @@ def main_temps_1D() :
         ('nb_pas', np.uint32)
     ])
 
-    # on initialise les marches aleatoires et on attend que ce soit finit
     tableau_ma = device.new_buffer(nb_ma * struct_ma.itemsize, pm.ResourceStorageModePrivate)
     message = call_kernel(init_pipeline, queue, nb_ma, best_group_size, tableau_ma)
     message.wait_until_completed()
 
-    # on initialise le tableau des temps
     tableau_temps = device.new_buffer(nb_ma * np.dtype(np.int32).itemsize, pm.ResourceStorageModeShared)
     np.frombuffer(tableau_temps.contents(), dtype=np.int32, count=nb_ma).fill(0)
 
-    # on fait faire a la carte temps_retour_1
     message = call_kernel(temps_retour_1, queue, nb_ma, best_group_size, tableau_temps, tableau_ma)
     message.wait_until_completed()
 
@@ -84,7 +71,6 @@ def main_temps_1D() :
 def main_temps_2D() :
     nb_ma = 1024
     nb_iterations = 1000
-    # nb_iterations * max_steps = nb pas total
 
     device, queue, init_pipeline, _, _, temps_retour_2, _  = init_gpu()
     best_group_size = temps_retour_2.max_total_threads_per_threadgroup
@@ -157,4 +143,4 @@ if __name__ == "__main__" :
     plt.ylabel("Temps moyen de depassement de borne")
     plt.xscale("log", base=2)
     plt.axhline(y=2500, color='chocolate')
-    plt.savefig(f"/Users/jeanne/tipe/programmes/resultats_marche/convergence_temps.png", transparent = True, dpi=300, bbox_inches='tight', pad_inches = 0)
+    plt.savefig(f"resultats_marche/convergence_temps.png", transparent = True, dpi=300, bbox_inches='tight', pad_inches = 0)
