@@ -37,7 +37,7 @@ def call_kernel(pipeline_fonction, queue, nb_ma, best_group_size, *arguments) :
     encodeur.dispatch_threads(nb_ma, 1, 1, best_group_size, 1, 1)
     encodeur.end_encoding()
     message.commit()
-    return message  # Return the buffer so we can wait on the final one later
+    return message
 
 
 def main_temps_1D() :
