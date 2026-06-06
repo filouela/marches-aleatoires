@@ -3,15 +3,8 @@ using namespace metal ;
 
 constant uint max_steps = 1'000'000 ;
 constant uint borne = 100 ;
-// nb max de pas faits en un calcul
 
 uint random(uint seed) {
-    // on fait un peu n'importe quoi pour donner un nombre aleatoire
-    // les operations et nombres sont random
-    // u pour unsigned
-    // >> pour decaler a droite (ca fait des nombres tres petits)
-    // ^ pour faire xor
-
     uint state = seed * 747796405u + 2891336453u ;
     uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u ;
     return (word >> 22u) ^ word ;
@@ -49,13 +42,7 @@ kernel void temps_retour_1(
     device RW* marches_aleatoires      [[buffer(1)]], 
     uint id [[thread_position_in_grid]])
 {
-    // faut mettre kernel devant une fonction utilisee par le processeur
-    // faut mettre device devant les taleaux
-    // temps : tableau des temps de retour des ma
-    // id : id du thread
-
     if (temps[id] != 0) return ;
-    //deja calcule
 
     int x = marches_aleatoires[id].abscisse ;
     uint p = marches_aleatoires[id].proba ;
@@ -63,7 +50,6 @@ kernel void temps_retour_1(
     for(uint i = 0 ; i < max_steps ; i += 1){
         p = random(p) ;
         uint direction = p & 1u ;
-        // et bit a bit avec 1 : on regarde le dernier bit de p -> 2 choix
         if (direction == 0)      { x += 1 ; }
         else { x -= 1 ; }
         
@@ -91,7 +77,6 @@ kernel void temps_retour_2(
     for(uint i = 0 ; i < max_steps ; i += 1){
         p = random(p) ;
         uint direction = p & 3u ;
-        // on regarde les deux derniers bits de p -> 4 choix
         if (direction == 0)      { x += 1 ; }
         else if (direction == 1) { x -= 1 ; }
         else if (direction == 2) { y += 1 ; }
